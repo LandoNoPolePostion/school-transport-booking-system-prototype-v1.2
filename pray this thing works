@@ -1,0 +1,13 @@
+# School Transport Booking
+
+## How to Run
+
+1. Open the folder in VS Code.
+2. Run `npm install`
+3. Run `npm start`
+4. Visit `http://localhost:3000` in your browser.
+
+### Notes
+- Bookings are stored in `bookings.db`.
+- The schedule always shows **today + next 6 days**.
+- Old bookings are automatically deleted when a new one is added.

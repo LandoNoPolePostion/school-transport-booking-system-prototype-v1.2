@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Transport Booking</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>School Transport Booking</h1>
+
+  <form id="booking-form">
+    <input type="text" id="name" placeholder="Student Name" required>
+    <input type="text" id="vehicle" placeholder="Vehicle (Bus/Van)" required>
+    <input type="date" id="date" required>
+    <input type="time" id="start" required>
+    <input type="time" id="end" required>
+    <button type="submit">Book</button>
+  </form>
+
+  <h2>7-Day Schedule</h2>
+  <div id="schedule"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

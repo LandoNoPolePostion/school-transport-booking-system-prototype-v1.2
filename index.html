@@ -7,20 +7,55 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   <h1>School Transport Booking</h1>
 
-  <form id="booking-form">
-    <input type="text" id="name" placeholder="Student Name" required>
-    <input type="text" id="vehicle" placeholder="Vehicle (Bus/Van)" required>
-    <input type="date" id="date" required>
-    <input type="time" id="start" required>
-    <input type="time" id="end" required>
-    <button type="submit">Book</button>
-  </form>
+  <!-- INPUT AREA -->
+  <div class="formContainer">
+    <form id="bookingForm">
 
-  <h2>7-Day Schedule</h2>
-  <div id="schedule"></div>
+      <div class="formRow">
+        <label>Name:</label>
+        <input type="text" id="name" required>
+      </div>
+
+      <div class="formRow">
+        <label>Vehicle:</label>
+        <input type="text" id="vehicle" required>
+      </div>
+
+      <div class="formRow">
+        <label>Event Description:</label>
+        <input type="text" id="event" required>
+      </div>
+
+      <div class="formRow">
+        <label>Date:</label>
+        <input type="date" id="date" required>
+      </div>
+
+      <div class="formRow">
+        <label>Start Time:</label>
+        <input type="time" id="startTime" required>
+      </div>
+
+      <div class="formRow">
+        <label>End Time:</label>
+        <input type="time" id="endTime" required>
+      </div>
+
+      <button id="bookBtn" type="submit">BOOK</button>
+    </form>
+  </div>
+
+  <!-- SCHEDULE WRAPPER -->
+  <h2 class="schedTitle">7-Day Timetable Schedule (6:00 - 23:30)</h2>
+
+  <div class="scheduleWrapper">
+    <!-- Schedule will be injected here by script.js -->
+  </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+

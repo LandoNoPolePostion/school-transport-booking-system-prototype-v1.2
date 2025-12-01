@@ -1,37 +1,89 @@
 body {
   font-family: Arial, sans-serif;
-  margin: 20px;
-  background-color: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+  background: #f2f2f2;
 }
 
-h1, h2 {
-  text-align: center;
-}
+h1 { text-align: center; margin-bottom: 20px; }
+.formContainer { background: white; width: 90%; max-width: 480px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+.formRow { display: flex; flex-direction: column; margin-bottom: 15px; }
+.formRow label { margin-bottom: 5px; font-weight: bold; }
+.formRow input, .formRow select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+#bookBtn { width: 100%; padding: 15px; background: #2ecc71; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; color: white; cursor: pointer; margin-top: 10px; }
+#bookBtn:hover { background: #28b463; }
+.schedTitle { text-align: center; margin-top: 40px; }
 
-form {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
+/* ---------------------------------- */
+/* NEW TIMETABLE GRID STYLES          */
+/* ---------------------------------- */
 
-input, button {
-  padding: 8px;
-  font-size: 14px;
-}
-
-#schedule {
-  display: grid;
-  grid-template-columns: 150px repeat(7, 1fr);
-  gap: 4px;
+.scheduleWrapper {
+  width: 95%;
+  margin: 20px auto;
+  overflow-x: auto;
   background: white;
   padding: 10px;
   border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-#schedule div {
+.scheduleGrid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, minmax(150px, 1fr));
   border: 1px solid #ccc;
-  padding: 5px;
-  text-align: center;
 }
+
+/* Header Row */
+.headerCell {
+  padding: 10px 5px;
+  font-weight: bold;
+  text-align: center;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  background-color: #e9e9e9;
+  font-size: 0.9em;
+}
+
+/* Time Axis (Leftmost column) */
+.timeLabel {
+  padding: 5px;
+  text-align: right;
+  font-size: 0.8em;
+  border-bottom: 1px solid #eee;
+  height: 2em;
+  box-sizing: border-box;
+}
+.timeLabel:nth-child(odd) {
+  font-weight: bold;
+  border-top: 1px solid #ccc;
+}
+
+/* Main Grid Cells (Day Columns) */
+.dayCell {
+  position: relative;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+/* Alternating Hour Shading */
+.dayCell:nth-child(odd) {
+    background-color: #fafafa;
+}
+
+/* Booking Slot Styling (Green as requested) */
+.bookedSlot {
+  position: absolute;
+  width: 98%;
+  left: 1%;
+  background: #bbf7d0;
+  border: 1px solid #10b981;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
+  z-index: 10;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+

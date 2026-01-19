@@ -1,72 +1,66 @@
-// script.js
+// script.js - Updated with Positioning Fixes and Admin Access
 const API_URL = '/api/bookings';
-let allBookings = [];
-const START_HOUR = 6; // 6 AM
-const END_HOUR = 23.5;  // 11:30 PM
+const START_HOUR = 6; 
+const END_HOUR = 23.5; 
 const MINUTES_PER_SLOT = 30;
-const SLOTS_PER_HOUR = 60 / MINUTES_PER_SLOT;
-const TOTAL_SLOTS = (END_HOUR - START_HOUR) * SLOTS_PER_HOUR;
+const SLOT_HEIGHT_REM = 2.5; // This MUST match the .dayCell height in styles.css
 
-// Helper function to format dates as YYYY-MM-DD
-const formatDate = (d) => d.toISOString().split('T')[0];
-
-// Helper function for header display (e.g., Mon, Jul 29)
-const formatDayHeader = (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-
-// Converts HH:MM string to total minutes from midnight
-const timeToMinutes = (timeString) => {
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
+// Helper: Convert HH:MM to total minutes
+const timeToMinutes = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
 };
 
+// Helper: Format Date to YYYY-MM-DD
+const formatDate = (d) => d.toISOString().split('T')[0];
+
 async function fetchBookings() {
-    const response = await fetch(API_URL);
-    allBookings = await response.json();
-    buildSchedule();
+    try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        buildSchedule(data);
+    } catch (err) {
+        console.error("Error fetching bookings:", err);
+    }
 }
 
-function buildSchedule() {
-    const scheduleWrapper = document.querySelector(".scheduleWrapper");
-    if (!scheduleWrapper) return;
-    scheduleWrapper.innerHTML = "";
-
-    const today = new Date();
-    const daysToShow = 7;
-    const dayKeys = [];
-
-    // 1. Generate the next 7 days' date keys (YYYY-MM-DD)
-    for (let d = 0; d < daysToShow; d++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + d);
-        dayKeys.push(formatDate(date));
-    }
-
+function buildSchedule(bookings) {
+    const wrapper = document.querySelector(".scheduleWrapper");
+    if (!wrapper) return;
+    wrapper.innerHTML = ""; // Clear existing grid
+    
     const grid = document.createElement("div");
     grid.classList.add("scheduleGrid");
-    scheduleWrapper.appendChild(grid);
+    wrapper.appendChild(grid);
 
-    // 2. Create Headers (Time axis header + 7 day headers)
-    grid.appendChild(document.createElement("div")).classList.add("headerCell"); // Empty top-left corner
+    const today = new Date();
+    const dayKeys = [];
 
-    dayKeys.forEach((dayKey, index) => {
+    // 1. GENERATE HEADERS
+    grid.appendChild(document.createElement("div")).classList.add("headerCell"); // Corner
+    for (let d = 0; d < 7; d++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + d);
+        const key = formatDate(date);
+        dayKeys.push(key);
+
         const header = document.createElement("div");
         header.classList.add("headerCell");
-        const dayTitle = (index === 0) ? "Today" : formatDayHeader(new Date(dayKey));
-        header.textContent = dayTitle;
+        header.textContent = d === 0 ? "Today" : date.toLocaleDateString(undefined, {weekday:'short', day:'numeric'});
         grid.appendChild(header);
-    });
+    }
 
-    // 3. Create Time Axis and Day Cells
-    for (let i = 0; i < TOTAL_SLOTS; i++) {
-        const totalMinutes = START_HOUR * 60 + i * MINUTES_PER_SLOT;
-        const hour = Math.floor(totalMinutes / 60);
-        const mins = totalMinutes % 60;
-        const timeText = `${hour.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    // 2. GENERATE TIME LABELS & EMPTY CELLS
+    const totalSlots = (END_HOUR - START_HOUR) * (60 / MINUTES_PER_SLOT);
+    for (let i = 0; i < totalSlots; i++) {
+        const totalMins = (START_HOUR * 60) + (i * MINUTES_PER_SLOT);
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
 
-        const timeLabelCell = document.createElement("div");
-        timeLabelCell.classList.add("timeLabel");
-        if (mins === 0) { timeLabelCell.textContent = timeText; }
-        grid.appendChild(timeLabelCell);
+        const timeLabel = document.createElement("div");
+        timeLabel.classList.add("timeLabel");
+        if (m === 0) timeLabel.textContent = `${h.toString().padStart(2, '0')}:00`;
+        grid.appendChild(timeLabel);
 
         dayKeys.forEach(dayKey => {
             const dayCell = document.createElement("div");
@@ -77,76 +71,87 @@ function buildSchedule() {
         });
     }
 
-    // 4. Place Bookings within the grid
-    allBookings.forEach(booking => {
+    // 3. POSITION BOOKINGS
+    bookings.forEach(booking => {
         const dayIndex = dayKeys.indexOf(booking.date);
-        if (dayIndex === -1) return;
+        if (dayIndex === -1) return; // Skip if date is not in the 7-day view
 
-        const bookingStartMins = timeToMinutes(booking.start);
-        const bookingEndMins = timeToMinutes(booking.end);
+        const startMins = timeToMinutes(booking.start);
+        const endMins = timeToMinutes(booking.end);
         const scheduleStartMins = START_HOUR * 60;
 
-        const offsetMins = bookingStartMins - scheduleStartMins;
-        const durationMins = bookingEndMins - bookingStartMins;
+        const offsetMins = startMins - scheduleStartMins;
+        const durationMins = endMins - startMins;
 
         if (offsetMins < 0 || durationMins <= 0) return;
 
-        const topEm = (offsetMins / MINUTES_PER_SLOT) * 2;
-        const heightEm = (durationMins / MINUTES_PER_SLOT) * 2;
-
-        const bookingSlot = document.createElement("div");
-        bookingSlot.classList.add("bookedSlot");
-        bookingSlot.style.top = `${topEm}em`;
-        bookingSlot.style.height = `${heightEm}em`;
-
-        bookingSlot.innerHTML = `
+        // CREATE THE SLOT
+        const slot = document.createElement("div");
+        slot.classList.add("bookedSlot", booking.status || 'pending');
+        
+        // Correct Math for Positioning (Top and Height)
+        const topRem = (offsetMins / MINUTES_PER_SLOT) * SLOT_HEIGHT_REM;
+        const heightRem = (durationMins / MINUTES_PER_SLOT) * SLOT_HEIGHT_REM;
+        
+        slot.style.top = `${topRem}rem`;
+        slot.style.height = `${heightRem}rem`;
+        
+        slot.innerHTML = `
             <strong>${booking.start} - ${booking.end}</strong><br>
-            ${booking.event} (${booking.vehicle})
+            ${booking.event} <br>
+            <span style="font-size: 8px;">(${booking.vehicle})</span>
         `;
 
-        const targetCell = grid.querySelector(`.dayCell[data-day="${booking.date}"][data-slot="${Math.floor(offsetMins / MINUTES_PER_SLOT)}"]`);
-
-        if (targetCell) { targetCell.appendChild(bookingSlot); }
+        // IMPORTANT: Append to the first slot of the day to anchor the 'top' calculation
+        const target = grid.querySelector(`.dayCell[data-day="${booking.date}"][data-slot="0"]`);
+        if (target) target.appendChild(slot);
     });
 }
 
-// Handle form submission
-document.getElementById("bookingForm").addEventListener("submit", async e => {
-    e.preventDefault();
+// 4. FORM SUBMISSION
+const bookingForm = document.getElementById("bookingForm");
+if (bookingForm) {
+    bookingForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const payload = {
+            name: document.getElementById("name").value,
+            vehicle: document.getElementById("vehicle").value,
+            event: document.getElementById("event").value,
+            date: document.getElementById("date").value,
+            start: document.getElementById("startTime").value,
+            end: document.getElementById("endTime").value
+        };
 
-    const name = document.getElementById("name").value;
-    const vehicle = document.getElementById("vehicle").value;
-    const event = document.getElementById("event").value;
-    const date = document.getElementById("date").value;
-    const start = document.getElementById("startTime").value;
-    const end = document.getElementById("endTime").value;
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-    const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, vehicle, event, date, start, end })
+        if (res.ok) {
+            alert("Booking submitted! Waiting for approval.");
+            fetchBookings();
+            bookingForm.reset();
+            initializeFormDate(); // Reset date to today
+        } else {
+            alert("Error submitting booking.");
+        }
     });
+}
 
-    if (response.ok) {
-        await fetchBookings();
-        e.target.reset();
-    } else {
-        alert("Failed to book the trip.");
-    }
-});
-
-// Initialize form date input to today's date and fetch bookings
+// 5. INITIALIZE FORM DATE
 function initializeFormDate() {
-    const todayKey = formatDate(new Date());
-    document.getElementById("date").min = todayKey;
-    document.getElementById("date").value = todayKey;
+    const dateInput = document.getElementById("date");
+    if (dateInput) {
+        const todayKey = formatDate(new Date());
+        dateInput.min = todayKey;
+        dateInput.value = todayKey;
+    }
 }
 
-// Draw schedule on page load
+// RUN ON LOAD
 initializeFormDate();
 fetchBookings();
 
-// Draw schedule on page load
-initializeFormDate();
-fetchBookings();
 

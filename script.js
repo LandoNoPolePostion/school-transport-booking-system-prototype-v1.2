@@ -153,5 +153,7 @@ function initializeFormDate() {
 // RUN ON LOAD
 initializeFormDate();
 fetchBookings();
+fetchBookings();
+
 
 

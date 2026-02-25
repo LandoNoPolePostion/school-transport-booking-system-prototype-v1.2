@@ -9,5 +9,3 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at TEXT NOT NULL
 );
 
-
-

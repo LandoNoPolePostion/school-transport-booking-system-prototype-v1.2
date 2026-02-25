@@ -1,34 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Transport Booking</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Transport Booking</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
     <h1>School Transport Booking</h1>
+
     <div class="formContainer">
         <form id="bookingForm">
-            <div class="formRow"><label>Name</label><input type="text" id="name" required></div>
-            <div class="formRow"><label>Vehicle</label><input type="text" id="vehicle" required></div>
-            <div class="formRow"><label>Event</label><input type="text" id="event" required></div>
-            <div class="formRow"><label>Date</label><input type="date" id="date" required></div>
-            <div class="formRow"><label>Start</label><input type="time" id="startTime" required></div>
-            <div class="formRow"><label>End</label><input type="time" id="endTime" required></div>
+            <div class="formRow">
+                <label>Name</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="formRow">
+                <label>Vehicle</label>
+                <input type="text" id="vehicle" required>
+            </div>
+            <div class="formRow">
+                <label>Event</label>
+                <input type="text" id="event" required>
+            </div>
+            <div class="formRow">
+                <label>Date</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="formRow">
+                <label>Start</label>
+                <input type="time" id="startTime" required>
+            </div>
+            <div class="formRow">
+                <label>End</label>
+                <input type="time" id="endTime" required>
+            </div>
             <button id="bookBtn" type="submit">BOOK TRIP</button>
         </form>
     </div>
-    <div class="scheduleWrapper"></div>
+
+    <div class="scheduleWrapper">
+        </div>
+
     <div style="text-align: center; margin-top: 50px;">
-        <button onclick="adminLogin()" style="opacity: 0.5; font-size: 10px;">Admin Access</button>
+        <button id="adminLoginBtn" style="opacity: 0.3; border: none; background: none; cursor: pointer;">Admin Access</button>
     </div>
+
     <script src="script.js"></script>
     <script>
-        function adminLogin() {
+        document.getElementById('adminLoginBtn').onclick = () => {
             const p = prompt("Password:");
-            if(p === "0220200819") { sessionStorage.setItem('auth', 'true'); window.location.href = 'admin.html'; }
-        }
+            if(p === "0220200819") { 
+                sessionStorage.setItem('auth', 'true'); 
+                window.location.href = 'admin.html'; 
+            }
+        };
     </script>
 </body>
 </html>
-
-

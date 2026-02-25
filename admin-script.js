@@ -1,120 +1,108 @@
-const API_URL = '/api/bookings';
 const START_HOUR = 6; 
 const END_HOUR = 23.5; 
-const MINUTES_PER_SLOT = 30;
-const SLOT_HEIGHT_REM = 2.5; // Matches styles.css
+const SLOT_HEIGHT = 2.5; // Matches 2.5rem in styles.css
 
-const timeToMinutes = (t) => {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
+// Attach functions to window so onclick works in the grid
+window.approveBooking = async (id) => {
+    const res = await fetch(`/api/bookings/${id}/approve`, { method: 'PATCH' });
+    if (res.ok) {
+        fetchAdminBookings(); // Refresh the data
+    } else {
+        alert("Server error during approval. Check server console.");
+    }
 };
 
-const formatDate = (d) => d.toISOString().split('T')[0];
+window.deleteBooking = async (id) => {
+    if (confirm("Delete this booking permanently?")) {
+        const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+        if (res.ok) fetchAdminBookings();
+    }
+};
 
-async function fetchBookings() {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    buildAdminSchedule(data);
-}
-
-// ACTION: Approve
-async function approveBooking(id) {
-    await fetch(`${API_URL}/${id}/approve`, { method: 'PATCH' });
-    fetchBookings(); // Refresh grid
-}
-
-// ACTION: Delete
-async function deleteBooking(id) {
-    if(confirm("Are you sure you want to delete this booking?")) {
-        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        fetchBookings(); // Refresh grid
+async function fetchAdminBookings() {
+    try {
+        const res = await fetch('/api/bookings');
+        const data = await res.json();
+        renderAdminGrid(data);
+    } catch (err) {
+        console.error("Error fetching admin data:", err);
     }
 }
 
-function buildAdminSchedule(bookings) {
+function renderAdminGrid(bookings) {
     const wrapper = document.querySelector(".scheduleWrapper");
     if (!wrapper) return;
-    wrapper.innerHTML = ""; 
+    wrapper.innerHTML = "";
     
     const grid = document.createElement("div");
-    grid.classList.add("scheduleGrid");
+    grid.className = "scheduleGrid";
     wrapper.appendChild(grid);
 
     const today = new Date();
     const dayKeys = [];
 
-    // 1. GENERATE HEADERS
-    grid.appendChild(document.createElement("div")).classList.add("headerCell"); 
-    for (let d = 0; d < 7; d++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + d);
-        const key = formatDate(date);
+    // Header Column
+    grid.appendChild(document.createElement("div")).className = "headerCell";
+    for(let i=0; i<7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const key = d.toISOString().split('T')[0];
         dayKeys.push(key);
-
-        const header = document.createElement("div");
-        header.classList.add("headerCell");
-        header.textContent = d === 0 ? "Today" : date.toLocaleDateString(undefined, {weekday:'short', day:'numeric'});
-        grid.appendChild(header);
+        const h = document.createElement("div");
+        h.className = "headerCell";
+        h.textContent = d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'});
+        grid.appendChild(h);
     }
 
-    // 2. GENERATE TIME LABELS & CELLS
-    const totalSlots = (END_HOUR - START_HOUR) * (60 / MINUTES_PER_SLOT);
-    for (let i = 0; i < totalSlots; i++) {
-        const totalMins = (START_HOUR * 60) + (i * MINUTES_PER_SLOT);
-        const h = Math.floor(totalMins / 60);
-        const m = totalMins % 60;
+    // Time Slots
+    const totalSlots = (END_HOUR - START_HOUR) * 2;
+    for(let i=0; i<totalSlots; i++) {
+        const tLabel = document.createElement("div");
+        tLabel.className = "timeLabel";
+        const mins = (START_HOUR * 60) + (i * 30);
+        if(mins % 60 === 0) tLabel.textContent = `${mins/60}:00`;
+        grid.appendChild(tLabel);
 
-        const timeLabel = document.createElement("div");
-        timeLabel.classList.add("timeLabel");
-        if (m === 0) timeLabel.textContent = `${h.toString().padStart(2, '0')}:00`;
-        grid.appendChild(timeLabel);
-
-        dayKeys.forEach(dayKey => {
-            const dayCell = document.createElement("div");
-            dayCell.classList.add("dayCell");
-            dayCell.dataset.day = dayKey;
-            dayCell.dataset.slot = i;
-            grid.appendChild(dayCell);
+        dayKeys.forEach(day => {
+            const cell = document.createElement("div");
+            cell.className = "dayCell";
+            cell.dataset.day = day;
+            cell.dataset.slot = i;
+            grid.appendChild(cell);
         });
     }
 
-    // 3. POSITION ADMIN BOOKINGS
-    bookings.forEach(booking => {
-        const dayIndex = dayKeys.indexOf(booking.date);
-        if (dayIndex === -1) return;
+    // Bookings
+    bookings.forEach(b => {
+        const dIdx = dayKeys.indexOf(b.date);
+        if(dIdx === -1) return;
 
-        const startMins = timeToMinutes(booking.start);
-        const endMins = timeToMinutes(booking.end);
-        const offsetMins = startMins - (START_HOUR * 60);
-        const durationMins = endMins - startMins;
-
-        if (offsetMins < 0 || durationMins <= 0) return;
+        const [h1, m1] = b.start.split(':').map(Number);
+        const [h2, m2] = b.end.split(':').map(Number);
+        const start = h1 * 60 + m1;
+        const offset = start - (START_HOUR * 60);
+        const duration = (h2 * 60 + m2) - start;
 
         const slot = document.createElement("div");
-        slot.classList.add("bookedSlot", booking.status);
+        slot.className = `bookedSlot ${b.status || 'pending'}`;
+        slot.style.top = `${(offset / 30) * SLOT_HEIGHT}rem`;
+        slot.style.height = `${(duration / 30) * SLOT_HEIGHT}rem`;
         
-        const topRem = (offsetMins / MINUTES_PER_SLOT) * SLOT_HEIGHT_REM;
-        const heightRem = (durationMins / MINUTES_PER_SLOT) * SLOT_HEIGHT_REM;
+        const isApproved = b.status === 'approved';
         
-        slot.style.top = `${topRem}rem`;
-        slot.style.height = `${heightRem}rem`;
-        
-        // ADMIN INTERFACE: Adding the buttons directly inside the slot
         slot.innerHTML = `
-            <div style="font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.1); margin-bottom:2px;">
-                ${booking.start} - ${booking.end}
+            <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${b.event}
             </div>
-            <div style="font-size: 9px;">${booking.event}</div>
             <div class="admin-actions">
-                ${booking.status === 'pending' ? `<button class="btn-approve" onclick="approveBooking(${booking.id})">✔</button>` : ''}
-                <button class="btn-delete" onclick="deleteBooking(${booking.id})">✘</button>
+                ${!isApproved ? `<button class="btn-approve" onclick="window.approveBooking(${b.id})">✔</button>` : `<span style="font-size:10px">✅</span>`}
+                <button class="btn-delete" onclick="window.deleteBooking(${b.id})">✘</button>
             </div>
         `;
-
-        const target = grid.querySelector(`.dayCell[data-day="${booking.date}"][data-slot="0"]`);
-        if (target) target.appendChild(slot);
+        
+        const target = grid.querySelector(`.dayCell[data-day="${b.date}"][data-slot="0"]`);
+        if(target) target.appendChild(slot);
     });
 }
 
-// Run on load
-fetchBookings();
+fetchAdminBookings();

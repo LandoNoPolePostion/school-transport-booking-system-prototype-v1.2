@@ -6,5 +6,3 @@ const db = new sqlite3.Database('./transport.db');
 
 module.exports = db;
 
-
-
